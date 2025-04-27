@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>MyBoom</title>
+  <style>
+    /* Reset & base */
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 { font-size: 2.5rem; color: #ff4500; font-family: 'Impact', sans-serif; margin-bottom:20px; }
+    h2 { margin-bottom:20px; }
+    .button {
+      display: inline-block;
+      margin: 10px;
+      padding: 12px 24px;
+      background: #ff4500;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .button:hover { background: #cc3700; }
+    input, textarea, select, button {
+      width: 100%;
+      max-width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button { background: #ff4500; color: #fff; cursor: pointer; }
+    button:hover { background: #cc3700; }
+    .hidden { display: none; }
+    /* Gallery grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .card {
+      background: #222;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px #ff4500;
+      text-align: center;
+    }
+    .card img { width: 100%; border-radius: 6px; }
+    .card h3 { color: #ff4500; margin:10px 0 6px; }
+    .card p { margin:4px 0; font-size: .9rem; }
+    .card button { width: auto; margin-top:8px; padding:6px 12px; background:#880000; }
+    /* Search bar */
+    .search-bar { margin-bottom: 16px; }
+    .search-bar input, .search-bar select { width: auto; display: inline-block; margin-right:8px; }
+    .search-bar button { display: inline-block; width: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HOME -->
+    <section id="home">
+      <h1>🔥 Welcome to MyBoom!</h1>
+      <p>Explore epic fireworks or log in to add your own!</p>
+      <div>
+        <button class="button" id="toGallery">View Gallery</button>
+        <button class="button" id="toLogin">Owner Login</button>
+      </div>
+    </section>
+
+    <!-- LOGIN -->
+    <section id="login" class="hidden">
+      <h2>Owner Login</h2>
+      <form id="loginForm">
+        <input id="username" type="text" placeholder="Username" required />
+        <input id="password" type="password" placeholder="Password" required />
+        <button type="submit">Log In</button>
+      </form>
+      <p><button class="button" id="backFromLogin">Back</button></p>
+    </section>
+
+    <!-- ADD -->
+    <section id="add" class="hidden">
+      <h2>Add a New Firework</h2>
+      <form id="addForm">
+        <input id="name" type="text" placeholder="Firework Name" required />
+        <textarea id="description" rows="4" placeholder="Description" required></textarea>
+        <input id="image" type="text" placeholder="Image URL" required />
+        <select id="category">
+          <option>Rockets</option>
+          <option>Sparklers</option>
+          <option>Fountains</option>
+          <option>Other</option>
+        </select>
+        <button type="submit">Add Firework</button>
+      </form>
+      <p><button class="button" id="backFromAdd">Back to Gallery</button></p>
+    </section>
+
+    <!-- GALLERY -->
+    <section id="gallery" class="hidden">
+      <h1>🎇 Fireworks Gallery 🎇</h1>
+      <div class="search-bar">
+        <input id="search" type="text" placeholder="Search…" />
+        <select id="filterCat">
+          <option>All</option>
+          <option>Rockets</option>
+          <option>Sparklers</option>
+          <option>Fountains</option>
+          <option>Other</option>
+        </select>
+        <button id="doSearch" class="button">Search</button>
+      </div>
+      <div class="grid" id="galleryGrid"></div>
+      <p>
+        <button class="button" id="backFromGallery">Back to Home</button>
+        <button class="button hidden" id="toAdd">Add Firework</button>
+      </p>
+    </section>
+  </div>
+
+  <script>
+  (function(){
+    /* Storage keys */
+    const FW_KEY = 'fireworks';
+    const loginKey = 'loggedIn';
+
+    /* Utility */
+    function getFW(){ return JSON.parse(localStorage.getItem(FW_KEY)||'[]'); }
+    function saveFW(arr){ localStorage.setItem(FW_KEY,JSON.stringify(arr)); }
+    function isLogged(){ return sessionStorage.getItem(loginKey)==='true'; }
+
+    /* Section toggler */
+    const sec = { home:1, login:1, add:1, gallery:1 };
+    function show(s){
+      Object.keys(sec).forEach(k=> document.getElementById(k).classList.add('hidden'));
+      document.getElementById(s).classList.remove('hidden');
+      // show/hide Add button in gallery
+      document.getElementById('toAdd').classList.toggle('hidden', !isLogged());
+    }
+
+    /* Navigation buttons */
+    document.getElementById('toGallery').onclick = ()=>show('gallery');
+    document.getElementById('toLogin').onclick   = ()=>show('login');
+    document.getElementById('backFromLogin').onclick = ()=>show('home');
+    document.getElementById('backFromGallery').onclick = ()=>show('home');
+    document.getElementById('backFromAdd').onclick = ()=>show('gallery');
+    document.getElementById('toAdd').onclick = ()=>show('add');
+
+    /* Login form */
+    document.getElementById('loginForm').onsubmit = e=>{
+      e.preventDefault();
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if(u==='admin' && p==='fireboom'){
+        sessionStorage.setItem(loginKey,'true');
+        show('add');
+      } else {
+        alert('Login failed');
+      }
+    };
+
+    /* Add form */
+    document.getElementById('addForm').onsubmit = e=>{
+      e.preventDefault();
+      if(!isLogged()){ return alert('Not authorized'); }
+      const arr = getFW();
+      arr.push({
+        name: document.getElementById('name').value,
+        desc: document.getElementById('description').value,
+        image: document.getElementById('image').value,
+        category: document.getElementById('category').value
+      });
+      saveFW(arr);
+      show('gallery'); renderGallery();
+    };
+
+    /* Gallery render */
+    const grid = document.getElementById('galleryGrid');
+    function renderGallery(){
+      const arr = getFW();
+      const q = document.getElementById('search').value.toLowerCase();
+      const cat = document.getElementById('filterCat').value;
+      grid.innerHTML = '';
+      arr.forEach((item,i)=>{
+        if((item.name.toLowerCase().includes(q)||item.desc.toLowerCase().includes(q))
+           && (cat==='All'||item.category===cat)){
+          const card = document.createElement('div'); card.className='card';
+          card.innerHTML = `
+            <img src="${item.image}" alt="${item.name}">
+            <h3>${item.name}</h3>
+            <p><em>${item.category}</em></p>
+            <p>${item.desc}</p>
+          `;
+          if(isLogged()){
+            const btn = document.createElement('button');
+            btn.textContent = '🗑 Delete';
+            btn.onclick = ()=>{ arr.splice(i,1); saveFW(arr); renderGallery(); };
+            card.appendChild(btn);
+          }
+          grid.appendChild(card);
+        }
+      });
+      if(!grid.children.length) grid.innerHTML='<p>No fireworks found.</p>';
+    }
+    document.getElementById('doSearch').onclick = e=>{ e.preventDefault(); renderGallery(); };
+
+    /* Start on home */
+    show('home');
+  })();
+  </script>
+</body>
+</html>
